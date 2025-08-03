@@ -1,0 +1,9 @@
+{
+	"name": "ncplamenaadf",
+	"location": "canadacentral",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "671e2757-ae36-4217-92fb-bac80a449a7d",
+		"tenantId": "c40dc40b-395d-4bc2-9674-8b076a08f8a6"
+	}
+}
