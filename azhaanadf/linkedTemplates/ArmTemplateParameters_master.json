@@ -1,0 +1,51 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "azhaanadf"
+		},
+		"AzureBlobStorage1_connectionString": {
+			"value": ""
+		},
+		"ls_adlssink_accountKey": {
+			"value": ""
+		},
+		"ls_blobsource_connectionString": {
+			"value": ""
+		},
+		"AzureDataLakeStorage1_properties_typeProperties_url": {
+			"value": "https://amenaadlsgen2.dfs.core.windows.net/"
+		},
+		"AzureDatabricks1_properties_typeProperties_existingClusterId": {
+			"value": "0731-173309-xw18un4q"
+		},
+		"AzureKeyVault1_properties_typeProperties_baseUrl": {
+			"value": "https://azhaankeyvault.vault.azure.net/"
+		},
+		"AzureSqlDatabase1_properties_typeProperties_server": {
+			"value": "ncpl-amena-server.database.windows.net"
+		},
+		"AzureSqlDatabase1_properties_typeProperties_database": {
+			"value": "mydb6"
+		},
+		"AzureSqlDatabase1_properties_typeProperties_userName": {
+			"value": "adminnusrat"
+		},
+		"ls_adlssink_properties_typeProperties_url": {
+			"value": "https://azhaanadlsgen2.dfs.core.windows.net/"
+		},
+		"ls_voicelogs_properties_typeProperties_url": {
+			"value": "https://www.kaggle.com/api/v1"
+		},
+		"ls_voicelogs_properties_typeProperties_userName": {
+			"value": "nusratamena"
+		},
+		"containerUri": {
+			"value": ""
+		},
+		"containerSasToken": {
+			"value": ""
+		}
+	}
+}
