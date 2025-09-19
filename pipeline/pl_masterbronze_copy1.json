@@ -1,0 +1,253 @@
+{
+	"name": "pl_masterbronze_copy1",
+	"properties": {
+		"activities": [
+			{
+				"name": "lookupwatermark",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "getwatermark",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "foreachwatermarkactivity",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "lookupwatermark",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('lookupwatermark').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Switch1",
+							"type": "Switch",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"on": {
+									"value": "@item().SourceName",
+									"type": "Expression"
+								},
+								"cases": [
+									{
+										"value": "AzureSQL",
+										"activities": [
+											{
+												"name": "Copyfromazuresql",
+												"type": "Copy",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"source": {
+														"type": "AzureSqlSource",
+														"sqlReaderQuery": {
+															"value": "SELECT * FROM DBO.CLINICALMETRICES\nWHERE LastUpdatedOn > '@{item().LastModifiedWatermark}'",
+															"type": "Expression"
+														},
+														"queryTimeout": "02:00:00",
+														"partitionOption": "None"
+													},
+													"sink": {
+														"type": "DelimitedTextSink",
+														"storeSettings": {
+															"type": "AzureBlobFSWriteSettings"
+														},
+														"formatSettings": {
+															"type": "DelimitedTextWriteSettings",
+															"quoteAllText": true,
+															"fileExtension": ".csv"
+														}
+													},
+													"enableStaging": false,
+													"translator": {
+														"type": "TabularTranslator",
+														"typeConversion": true,
+														"typeConversionSettings": {
+															"allowDataTruncation": true,
+															"treatBooleanAsNumber": false
+														}
+													}
+												},
+												"inputs": [
+													{
+														"referenceName": "ds_azuresql",
+														"type": "DatasetReference"
+													}
+												],
+												"outputs": [
+													{
+														"referenceName": "ds_sqlsink",
+														"type": "DatasetReference"
+													}
+												]
+											},
+											{
+												"name": "Stored procedureazuresql",
+												"type": "SqlServerStoredProcedure",
+												"dependsOn": [
+													{
+														"activity": "Copyfromazuresql",
+														"dependencyConditions": [
+															"Succeeded"
+														]
+													}
+												],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"storedProcedureName": "[dbo].[UpdateWatermark]",
+													"storedProcedureParameters": {
+														"newValue": {
+															"value": "2025-08-03T00:00:00Z",
+															"type": "Datetime"
+														},
+														"sourceName": {
+															"value": "'AzureSQL'",
+															"type": "String"
+														}
+													}
+												},
+												"linkedServiceName": {
+													"referenceName": "AzureSqlDatabase1",
+													"type": "LinkedServiceReference"
+												}
+											}
+										]
+									},
+									{
+										"value": "Blob",
+										"activities": [
+											{
+												"name": "Execute Pipeline1",
+												"type": "ExecutePipeline",
+												"dependsOn": [],
+												"policy": {
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"pipeline": {
+														"referenceName": "pl_childbronze",
+														"type": "PipelineReference"
+													},
+													"waitOnCompletion": false,
+													"parameters": {
+														"SourceName": {
+															"value": "@item().SourceName",
+															"type": "Expression"
+														},
+														"LastModifiedWatermark": {
+															"value": "@item().LastModifiedWatermark",
+															"type": "Expression"
+														}
+													}
+												}
+											}
+										]
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Datacleaning",
+				"type": "DatabricksNotebook",
+				"dependsOn": [
+					{
+						"activity": "foreachwatermarkactivity",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": "/marketing project2/Data Cleaning"
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureDatabricks1",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "LoadingintoDW",
+				"type": "DatabricksNotebook",
+				"dependsOn": [
+					{
+						"activity": "Datacleaning",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": "/marketing project2/Loading to GoldLayer"
+				},
+				"linkedServiceName": {
+					"referenceName": "AzureDatabricks1",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2025-08-13T23:35:20Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}
